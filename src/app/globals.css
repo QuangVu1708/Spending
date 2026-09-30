@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --mobile-nav-bg: rgba(255, 255, 255, 0.95);
+}
+
+:root.dark {
+  --background: #000000;
+  --foreground: #f8fafc;
+  --mobile-nav-bg: rgba(20, 20, 20, 0.95);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: transparent;
+  color: var(--foreground);
+}
+
+/* Custom CSS for Liquid Animated Background */
+.liquid-bg-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.liquid-blob {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.8;
+  border-radius: 50%;
+  animation: liquid-float 20s infinite alternate cubic-bezier(0.5, 0, 0.5, 1);
+  mix-blend-mode: multiply;
+}
+
+:root.dark .liquid-blob {
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+.liquid-blob-1 {
+  top: -10%;
+  left: -10%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(circle, rgba(99,102,241,0.8) 0%, rgba(99,102,241,0) 70%);
+  animation-delay: 0s;
+}
+
+.liquid-blob-2 {
+  bottom: -20%;
+  right: -10%;
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(circle, rgba(236,72,153,0.7) 0%, rgba(236,72,153,0) 70%);
+  animation-delay: -5s;
+}
+
+.liquid-blob-3 {
+  top: 40%;
+  left: 30%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(14,165,233,0.6) 0%, rgba(14,165,233,0) 70%);
+  animation-delay: -10s;
+}
+
+@keyframes liquid-float {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15vw, -15vh) scale(1.2); }
+  66% { transform: translate(-15vw, 15vh) scale(0.8); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Page Transition Animation - Fixed for fixed positioned modals */
+@keyframes slideInRight {
+  0% { opacity: 0; transform: translateX(40px); }
+  99% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 1; transform: none; }
+}
+
+.animate-page-transition {
+  animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Rainbow Animated Border Effect */
+@keyframes rainbow-border-anim {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.rainbow-border {
+  position: relative;
+}
+
+.rainbow-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px; /* Border thickness */
+  background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #8b00ff, #ff0000);
+  background-size: 200% 100%;
+  animation: rainbow-border-anim 4s linear infinite;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Apple iOS Liquid Glass Utility Class */
+@utility ios-glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+:root.dark .ios-glass {
+  background: rgba(20, 20, 20, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 10px;
+}
