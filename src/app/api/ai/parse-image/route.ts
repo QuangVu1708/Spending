@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 
 export const maxDuration = 60; // Allow more time for image processing
 
@@ -12,7 +11,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Chưa cấu hình GEMINI_API_KEY' }, { status: 500 });
     }
 
-    const ai = new GoogleGenAI({ apiKey });
     const walletsList = wallets?.map((w: any) => `- "${w.name}" (ID: ${w.id})`).join('\n') || 'Không có ví nào';
 
     const prompt = `Bạn là chuyên gia kế toán. Tôi có một bức ảnh chụp hóa đơn/biên lai/chuyển khoản.
@@ -29,37 +27,38 @@ ${walletsList}
   "wallet_id": "c1a2-3b4c..."
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: [
-        prompt,
-        {
-          inlineData: {
-            data: imageBase64,
-            mimeType: mimeType,
-          }
-        }
-      ],
-      config: {
-        responseMimeType: 'application/json',
-      }
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: mimeType, data: imageBase64 } }
+          ]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
     });
 
-    if (!response.text) {
-      throw new Error('AI returned empty response');
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Gemini API Image Error from fetch:", data);
+      throw new Error(data.error?.message || 'Lỗi kết nối Gemini API Ảnh');
     }
 
-    const result = JSON.parse(response.text);
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!resultText) {
+      throw new Error('AI returned empty response for image');
+    }
+
+    const result = JSON.parse(resultText);
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Gemini API Error:', error);
-    const errorString = String(error.message || error);
-    let friendlyMessage = 'Lỗi kết nối đến máy chủ AI.';
-    if (errorString.includes('503') || errorString.includes('experiencing high demand') || errorString.includes('UNAVAILABLE')) {
-      friendlyMessage = 'Hệ thống AI đang quá tải do quá nhiều người sử dụng. Vui lòng đợi 1 phút và thử lại!';
-    } else if (errorString.includes('404')) {
-      friendlyMessage = 'Phiên bản AI này hiện không khả dụng. Vui lòng kiểm tra lại.';
-    }
-    return NextResponse.json({ error: friendlyMessage }, { status: 500 });
+    console.error('Gemini API Route Error:', error);
+    return NextResponse.json({ error: String(error.message || error) }, { status: 500 });
   }
 }

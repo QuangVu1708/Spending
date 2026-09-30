@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
 
 export async function POST(request: Request) {
   try {
@@ -9,8 +8,6 @@ export async function POST(request: Request) {
     if (!apiKey) {
       return NextResponse.json({ error: 'Chưa cấu hình GEMINI_API_KEY' }, { status: 500 });
     }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     const walletsList = wallets?.map((w: any) => `- "${w.name}" (ID: ${w.id})`).join('\n') || 'Không có ví nào';
 
@@ -30,35 +27,33 @@ ${walletsList}
 
 Câu của người dùng: "${text}"`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      }
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
     });
 
-    if (!response.text) {
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Gemini API Error from fetch:", data);
+      throw new Error(data.error?.message || 'Lỗi kết nối Gemini API');
+    }
+
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!resultText) {
       throw new Error('AI returned empty response');
     }
 
-    const result = JSON.parse(response.text);
+    const result = JSON.parse(resultText);
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Gemini API Error:', error);
-    
-    // Xử lý lỗi 503 Overloaded hoặc các lỗi Google trả về
-    const errorString = String(error.message || error);
-    let friendlyMessage = 'Lỗi kết nối đến máy chủ AI.';
-    
-    if (errorString.includes('503') || errorString.includes('experiencing high demand') || errorString.includes('UNAVAILABLE')) {
-      friendlyMessage = 'Hệ thống AI của Google hiện đang quá tải do có quá nhiều người sử dụng. Vui lòng thử lại sau giây lát hoặc sử dụng nút Nhập thủ công nhé!';
-    } else if (errorString.includes('404') || errorString.includes('not found')) {
-      friendlyMessage = 'Phiên bản AI này hiện không khả dụng. Vui lòng kiểm tra lại cấu hình phiên bản Gemini.';
-    } else if (errorString.includes('API_KEY')) {
-      friendlyMessage = 'Vui lòng kiểm tra lại GEMINI_API_KEY của bạn.';
-    }
-
-    return NextResponse.json({ error: friendlyMessage }, { status: 500 });
+    console.error('Gemini API Route Error:', error);
+    return NextResponse.json({ error: String(error.message || error) }, { status: 500 });
   }
 }
