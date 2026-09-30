@@ -60,7 +60,7 @@ export default async function Dashboard() {
       {/* Smart & Manual Inputs */}
       <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <SmartTextInput wallets={wallets || []} categories={categories || []} userId={user.id} />
-        <ImageUpload />
+        <ImageUpload wallets={wallets || []} userId={user.id} />
       </div>
       
       {/* Bento Box Grid */}

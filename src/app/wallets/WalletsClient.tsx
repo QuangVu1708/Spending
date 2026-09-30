@@ -11,6 +11,13 @@ export default function WalletsClient({ initialWallets, userId }: { initialWalle
   const [wallets, setWallets] = useState(initialWallets);
   const [showDeficitModal, setShowDeficitModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  
+  // Transfer State
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [isTransferring, setIsTransferring] = useState(false);
   const [testAmount, setTestAmount] = useState('');
   
   // Add Wallet State
@@ -79,6 +86,64 @@ export default function WalletsClient({ initialWallets, userId }: { initialWalle
     }
   };
 
+  const handleTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (transferFrom === transferTo) {
+      alert('Ví nguồn và ví đích không được trùng nhau');
+      return;
+    }
+    const amount = parseInt(transferAmount);
+    if (!amount || amount <= 0) {
+      alert('Số tiền không hợp lệ');
+      return;
+    }
+
+    setIsTransferring(true);
+    
+    // Find wallets
+    const fromW = wallets.find(w => w.id === transferFrom);
+    const toW = wallets.find(w => w.id === transferTo);
+    
+    if (!fromW || !toW) {
+      setIsTransferring(false);
+      return;
+    }
+
+    // Update balances
+    const { error: err1 } = await supabase.from('wallets').update({ balance: fromW.balance - amount }).eq('id', fromW.id);
+    const { error: err2 } = await supabase.from('wallets').update({ balance: toW.balance + amount }).eq('id', toW.id);
+
+    // Save transaction record
+    await supabase.from('transactions').insert({
+      user_id: userId,
+      wallet_id: fromW.id,
+      amount: amount,
+      converted_amount: amount,
+      currency: 'VND',
+      note: `Chuyển tiền sang ${toW.name}`
+    });
+    
+    await supabase.from('transactions').insert({
+      user_id: userId,
+      wallet_id: toW.id,
+      amount: amount, // Positive to denote incoming or keep it generic? Usually income is positive, expense is negative. We'll just leave it generic.
+      converted_amount: amount,
+      currency: 'VND',
+      note: `Nhận tiền từ ${fromW.name}`
+    });
+
+    setIsTransferring(false);
+    
+    if (err1 || err2) {
+      alert('Lỗi chuyển tiền');
+    } else {
+      alert('Chuyển tiền thành công!');
+      setShowTransferModal(false);
+      setTransferAmount('');
+      window.location.reload();
+    }
+  };
+
   const handleAddWallet = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newWalletName.trim()) return;
@@ -118,6 +183,20 @@ export default function WalletsClient({ initialWallets, userId }: { initialWalle
         >
           <Plus className="w-5 h-5" /> Thêm Ví mới
         </button>
+          <button 
+            onClick={() => {
+               if (wallets.length >= 2) {
+                 setTransferFrom(wallets[0].id);
+                 setTransferTo(wallets[1].id);
+                 setShowTransferModal(true);
+               } else {
+                 alert('Bạn cần ít nhất 2 ví để chuyển tiền');
+               }
+            }}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-500 transition-colors shadow-md ml-3"
+          >
+            <ArrowRightLeft className="w-5 h-5" /> Chuyển tiền
+          </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
