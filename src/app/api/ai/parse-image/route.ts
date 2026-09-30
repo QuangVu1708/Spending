@@ -4,7 +4,7 @@ export const maxDuration = 60; // Allow more time for image processing
 
 export async function POST(request: Request) {
   try {
-    const { imageBase64, mimeType, wallets } = await request.json();
+    const { imageBase64, mimeType, wallets, categories } = await request.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     }
 
     const walletsList = wallets?.map((w: any) => `- "${w.name}" (ID: ${w.id})`).join('\n') || 'Không có ví nào';
+    const categoriesList = categories?.map((c: any) => `- "${c.name}" (ID: ${c.id}) (Type: ${c.type})`).join('\n') || 'Không có danh mục nào';
 
     const prompt = `Bạn là chuyên gia kế toán. Tôi có một bức ảnh chụp hóa đơn/biên lai/chuyển khoản.
 Hãy phân tích bức ảnh này và trích xuất thông tin để ghi chép chi tiêu:
@@ -19,15 +20,20 @@ Hãy phân tích bức ảnh này và trích xuất thông tin để ghi chép c
 2. note: Ghi chú tóm tắt (Ví dụ: "Hóa đơn siêu thị Coopmart", "Tiền cà phê Highland", "Biên lai chuyển khoản...").
 3. wallet_id: ID ví thanh toán (Nếu trong ảnh có gợi ý phương thức thanh toán như Momo, Vietcombank... thì chọn ID phù hợp từ danh sách sau, nếu không thấy thì bỏ trống ""):
 ${walletsList}
+4. category_id: Phân loại khoản chi này. Chọn ID danh mục phù hợp nhất từ danh sách sau:
+${categoriesList}
+5. type: Là "expense" (chi tiêu/trừ tiền) hay "income" (thu nhập/được cộng tiền). Hầu hết hóa đơn là "expense".
 
 Định dạng trả về duy nhất là JSON (không có markdown):
 {
   "amount": 50000,
   "note": "Hóa đơn siêu thị",
-  "wallet_id": "c1a2-3b4c..."
+  "wallet_id": "c1a2-3b4c...",
+  "category_id": "d4e5-6f7g...",
+  "type": "expense"
 }`;
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -32,7 +32,7 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
       const res = await fetch('/api/ai/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: input, wallets })
+        body: JSON.stringify({ text: input, wallets, categories })
       });
       const data = await res.json();
       
@@ -44,7 +44,9 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
           category: data.category || 'Khác',
           is_fixed: false,
           note: data.note || input,
-          wallet_id: data.wallet_id || undefined
+          wallet_id: data.wallet_id || undefined,
+          category_id: data.category_id || undefined,
+          type: data.type || 'expense'
         });
         
         // Auto select the wallet if AI detected it
@@ -86,14 +88,30 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
       return;
     }
 
+    const finalType = result?.type || 'expense';
+    const finalCategoryId = result?.category_id || manualCategory || null;
+
     const { error } = await supabase.from('transactions').insert({
       user_id: userId,
       wallet_id: wallet_id,
+      category_id: finalCategoryId,
       amount: amount,
       converted_amount: amount,
       currency: 'VND',
       note: note,
     });
+
+    if (!error) {
+      // Cập nhật số dư ví
+      const targetWallet = wallets?.find(w => w.id === wallet_id);
+      if (targetWallet) {
+        const newBalance = finalType === 'income' 
+          ? targetWallet.balance + amount 
+          : targetWallet.balance - amount;
+          
+        await supabase.from('wallets').update({ balance: newBalance }).eq('id', wallet_id);
+      }
+    }
 
     setIsSaving(false);
 

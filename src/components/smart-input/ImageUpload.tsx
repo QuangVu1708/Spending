@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
-export default function ImageUpload({ wallets, userId }: { wallets?: any[], userId?: string }) {
+export default function ImageUpload({ wallets, categories, userId }: { wallets?: any[], categories?: any[], userId?: string }) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -70,7 +70,7 @@ export default function ImageUpload({ wallets, userId }: { wallets?: any[], user
         body: JSON.stringify({ 
           imageBase64: base64, 
           mimeType: selectedFile.type,
-          wallets 
+          wallets, categories 
         })
       });
       
@@ -105,14 +105,28 @@ export default function ImageUpload({ wallets, userId }: { wallets?: any[], user
       return;
     }
 
+    const finalType = result.type || 'expense';
+    const finalCategoryId = result.category_id || null;
+
     const { error } = await supabase.from('transactions').insert({
       user_id: userId,
       wallet_id: wallet_id,
+      category_id: finalCategoryId,
       amount: amount,
       converted_amount: amount,
       currency: 'VND',
       note: note,
     });
+
+    if (!error) {
+      const targetWallet = wallets?.find(w => w.id === wallet_id);
+      if (targetWallet) {
+        const newBalance = finalType === 'income' 
+          ? targetWallet.balance + amount 
+          : targetWallet.balance - amount;
+        await supabase.from('wallets').update({ balance: newBalance }).eq('id', wallet_id);
+      }
+    }
 
     setIsSaving(false);
 

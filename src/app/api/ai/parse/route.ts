@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { text, wallets } = await request.json();
+    const { text, wallets, categories } = await request.json();
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -10,24 +10,30 @@ export async function POST(request: Request) {
     }
 
     const walletsList = wallets?.map((w: any) => `- "${w.name}" (ID: ${w.id})`).join('\n') || 'Không có ví nào';
+    const categoriesList = categories?.map((c: any) => `- "${c.name}" (ID: ${c.id}) (Type: ${c.type})`).join('\n') || 'Không có danh mục nào';
 
     const prompt = `Bạn là một trợ lý tài chính thông minh. Người dùng sẽ nhập một câu mô tả giao dịch chi tiêu.
 Nhiệm vụ của bạn là trích xuất các thông tin sau:
 1. amount: Số tiền (kiểu số nguyên). Nếu người dùng viết "50k", "50 cành" thì hiểu là 50000. Nếu "1 củ" là 1000000. Nếu có chữ "thu", "nhận" thì là thu nhập nhưng vẫn trả về số dương.
 2. note: Ghi chú ngắn gọn. Ví dụ: "Ăn phở", "Đổ xăng", "Lương tháng 10".
-3. wallet_id: ID của ví/tài khoản thanh toán. Chọn ID phù hợp nhất từ danh sách ví sau (nếu không khớp hoặc không nhắc đến, trả về rỗng ""):
+3. wallet_id: ID của ví/tài khoản thanh toán. Chọn ID phù hợp nhất từ danh sách ví sau (nếu không thấy, trả về rỗng ""):
 ${walletsList}
+4. category_id: ID của danh mục chi tiêu/thu nhập. Dựa vào nội dung giao dịch, hãy chọn ID phù hợp nhất từ danh mục sau:
+${categoriesList}
+5. type: Là "expense" (chi tiêu/trừ tiền) hay "income" (thu nhập/được cộng tiền). Ví dụ: "lương", "nhận", "ai đó trả" -> income. Còn lại mua sắm ăn uống là expense.
 
 Định dạng bắt buộc trả về là JSON (không có markdown). Mẫu:
 {
   "amount": 50000,
   "note": "Ăn sáng phở",
-  "wallet_id": "c1a2-3b4c..."
+  "wallet_id": "c1a2-3b4c...",
+  "category_id": "d4e5-6f7g...",
+  "type": "expense"
 }
 
 Câu của người dùng: "${text}"`;
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
