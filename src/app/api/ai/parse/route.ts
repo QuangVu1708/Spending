@@ -33,16 +33,29 @@ ${categoriesList}
 
 Câu của người dùng: "${text}"`;
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    let res;
+    let retries = 3;
+    let delay = 1000;
+    
+    while (retries > 0) {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { responseMimeType: "application/json" }
       })
-    });
+      });
+
+      if (res.status !== 503) break; // Thoát vòng lặp nếu không phải lỗi quá tải
+      
+      retries--;
+      if (retries === 0) break;
+      await new Promise(r => setTimeout(r, delay));
+      delay *= 2; // Exponential backoff
+    }
 
     const data = await res.json();
 
