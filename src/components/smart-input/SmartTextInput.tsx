@@ -146,6 +146,18 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
             </div>
           </form>
 
+          {!result && (
+            <div className="flex justify-center mt-6">
+              <button 
+                type="button" 
+                onClick={() => setIsManualMode(true)}
+                className="text-sm text-slate-500 hover:text-indigo-500 dark:hover:text-indigo-400 font-bold flex items-center gap-1.5 transition-colors bg-white/50 dark:bg-[#111] px-5 py-2 rounded-full ring-1 ring-slate-200 dark:ring-white/10"
+              >
+                <Edit3 className="w-4 h-4" /> Hoặc nhập thủ công (truyền thống)
+              </button>
+            </div>
+          )}
+
           {/* Hiển thị kết quả bóc tách từ AI */}
           {result && (
             <div className="mt-4 max-w-3xl mx-auto ios-glass p-6 rounded-[32px] animate-in slide-in-from-top-4 fade-in duration-500">
