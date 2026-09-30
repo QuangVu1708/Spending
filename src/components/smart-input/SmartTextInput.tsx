@@ -28,18 +28,39 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
     setIsLoading(true);
     setResult(null);
 
-    setTimeout(() => {
-      setResult({
-        amount: parseInt(input.replace(/[^0-9]/g, '')) || 50000,
-        currency: 'VND',
-        converted_amount: parseInt(input.replace(/[^0-9]/g, '')) || 50000,
-        category: 'Ăn uống',
-        is_fixed: false,
-        note: input,
+        try {
+      const res = await fetch('/api/ai/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input, wallets })
       });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setResult({
+          amount: data.amount || 0,
+          currency: 'VND',
+          converted_amount: data.amount || 0,
+          category: data.category || 'Khác',
+          is_fixed: false,
+          note: data.note || input,
+          wallet_id: data.wallet_id || undefined
+        });
+        
+        // Auto select the wallet if AI detected it
+        if (data.wallet_id) {
+          setManualWallet(data.wallet_id);
+        }
+        
+        setInput('');
+      } else {
+        alert('Lỗi AI: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Không thể kết nối đến AI');
+    } finally {
       setIsLoading(false);
-      setInput('');
-    }, 1500);
+    }
   };
 
   const openManualEditor = () => {
