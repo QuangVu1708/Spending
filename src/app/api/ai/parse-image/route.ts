@@ -62,6 +62,7 @@ ${categoriesList}
       delay *= 2; // Exponential backoff
     }
 
+    if (!res) throw new Error('Fetch failed');
     const data = await res.json();
 
     if (!res.ok) {
