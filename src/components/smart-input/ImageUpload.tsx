@@ -131,10 +131,10 @@ export default function ImageUpload({ wallets, categories, userId }: { wallets?:
     setIsSaving(false);
 
     if (!error) {
-      alert('Đã lưu giao dịch vào cơ sở dữ liệu!');
+      alert('Đã lưu giao dịch và tự động cập nhật số dư ví!');
       setResult(null);
       setFile(null);
-      router.refresh();
+      window.location.reload();
     } else {
       alert('Lỗi khi lưu giao dịch: ' + error.message);
     }

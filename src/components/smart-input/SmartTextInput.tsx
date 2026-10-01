@@ -15,6 +15,7 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
   const [manualAmount, setManualAmount] = useState('');
   const [manualNote, setManualNote] = useState('');
   const [manualCategory, setManualCategory] = useState('');
+  const [manualType, setManualType] = useState('expense');
   const [manualWallet, setManualWallet] = useState(wallets?.[0]?.id || '');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -68,9 +69,11 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
   const openManualEditor = () => {
     setIsManualMode(true);
     if (result) {
-      setManualAmount(result.converted_amount.toString());
-      setManualNote(result.note);
-      setManualCategory('');
+      setManualAmount(result.converted_amount?.toString() || result.amount?.toString() || '');
+      setManualNote(result.note || '');
+      setManualCategory(result.category_id || '');
+      setManualType(result.type || 'expense');
+      if (result.wallet_id) setManualWallet(result.wallet_id);
     }
   };
 
@@ -88,7 +91,7 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
       return;
     }
 
-    const finalType = result?.type || 'expense';
+    const finalType = isManualMode ? manualType : (result?.type || 'expense');
     const finalCategoryId = result?.category_id || manualCategory || null;
 
     const { error } = await supabase.from('transactions').insert({
@@ -121,7 +124,7 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
       setIsManualMode(false);
       setManualAmount('');
       setManualNote('');
-      router.refresh();
+      window.location.reload();
     } else {
       alert('Lỗi khi lưu giao dịch: ' + error.message);
     }
@@ -224,6 +227,20 @@ export default function SmartTextInput({ wallets, categories, userId }: { wallet
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            <div className="md:col-span-2 mb-2">
+              <div className="flex bg-slate-100 dark:bg-[#27272a] p-1 rounded-2xl w-fit">
+                <button 
+                  type="button" 
+                  onClick={() => setManualType('expense')}
+                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${manualType === 'expense' ? 'bg-white dark:bg-slate-800 text-red-500 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                >Khoản Chi (-)</button>
+                <button 
+                  type="button" 
+                  onClick={() => setManualType('income')}
+                  className={`px-6 py-2.5 rounded-xl font-bold transition-all ${manualType === 'income' ? 'bg-white dark:bg-slate-800 text-green-500 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                >Khoản Thu (+)</button>
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Số tiền</label>
               <input 

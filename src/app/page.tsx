@@ -1,5 +1,4 @@
-import SmartTextInput from '@/components/smart-input/SmartTextInput';
-import ImageUpload from '@/components/smart-input/ImageUpload';
+import UnifiedSmartInput from '@/components/smart-input/UnifiedSmartInput';
 import { ArrowDownRight, ArrowUpRight, Wallet, AlertCircle, Building2, TrendingUp, PieChart } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
@@ -59,8 +58,7 @@ export default async function Dashboard() {
 
       {/* Smart & Manual Inputs */}
       <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <SmartTextInput wallets={wallets || []} categories={categories || []} userId={user.id} />
-        <ImageUpload wallets={wallets || []} categories={categories || []} userId={user.id} />
+        <UnifiedSmartInput wallets={wallets || []} categories={categories || []} userId={user.id} />
       </div>
       
       {/* Bento Box Grid */}

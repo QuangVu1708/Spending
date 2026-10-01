@@ -36,9 +36,13 @@ ${categoriesList}
     let res;
     let retries = 3;
     let delay = 1000;
+    // Fallback models if one runs out of quota
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+    let currentModelIndex = 0;
     
-    while (retries > 0) {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+    while (retries > 0 && currentModelIndex < modelsToTry.length) {
+      const currentModel = modelsToTry[currentModelIndex];
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +58,13 @@ ${categoriesList}
       })
       });
 
-      if (res.status !== 503) break; // Thoát vòng lặp nếu không phải lỗi quá tải
+      if (res.status === 429 || res.status === 404 || res.status === 403) {
+        // Quota exceeded, model not found, or forbidden -> Try the next fallback model!
+        currentModelIndex++;
+        continue;
+      }
+      
+      if (res.status !== 503) break; // Thoát vòng lặp nếu thành công hoặc lỗi khác
       
       retries--;
       if (retries === 0) break;

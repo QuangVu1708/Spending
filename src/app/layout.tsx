@@ -7,6 +7,7 @@ import MobileNav from "@/components/layout/MobileNav";
 import { createClient } from "@/utils/supabase/server";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import WelcomeScreen from "@/components/WelcomeScreen";
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
