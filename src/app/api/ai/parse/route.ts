@@ -37,7 +37,7 @@ Câu của người dùng: "${text}"`;
     let retries = 3;
     let delay = 1000;
     // Fallback models if one runs out of quota
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+    const modelsToTry = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.1-pro'];
     let currentModelIndex = 0;
     
     while (retries > 0 && currentModelIndex < modelsToTry.length) {
