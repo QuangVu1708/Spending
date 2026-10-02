@@ -1,5 +1,6 @@
 'use client';
-import { Moon, Sun, LogOut } from 'lucide-react';
+import { Moon, Sun, Settings, Wrench } from 'lucide-react';
+import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
@@ -14,10 +15,7 @@ export default function MobileHeader({ profile = null }: { profile?: any }) {
     setMounted(true);
   }, []);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login';
-  };
+
 
   return (
     <div className="md:hidden sticky top-0 z-40 ios-glass border-b-0 px-5 py-3 flex items-center justify-between">
@@ -42,9 +40,12 @@ export default function MobileHeader({ profile = null }: { profile?: any }) {
             </button>
           </>
         )}
-        <button onClick={handleLogout} className="text-red-500 hover:text-red-600 transition-colors">
-          <LogOut className="w-5 h-5" />
-        </button>
+        <Link href="/utilities" className="text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+          <Wrench className="w-5 h-5" />
+        </Link>
+        <Link href="/settings" className="text-gray-500 dark:text-gray-400 hover:text-indigo-500 transition-colors">
+          <Settings className="w-5 h-5" />
+        </Link>
       </div>
     </div>
   );

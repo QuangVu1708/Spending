@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 import { useState, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Loader2, User, Camera, Save, Lock } from 'lucide-react';
+import { Loader2, User, Camera, Save, Lock, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function SettingsClient({ user, initialProfile }: { user: any, initialProfile: any }) {
@@ -19,10 +19,16 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
   const router = useRouter();
 
   
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 6) {
-      setPasswordMessage('Mật khẩu phải có ít nhất 6 ký tự.');
+      setPasswordMessage('Máº­t kháº©u pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»±.');
       return;
     }
     
@@ -32,9 +38,9 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
-      setPasswordMessage(`Lỗi: ${error.message}`);
+      setPasswordMessage(`Lá»—i: ${error.message}`);
     } else {
-      setPasswordMessage('Đổi mật khẩu thành công!');
+      setPasswordMessage('Äá»•i máº­t kháº©u thÃ nh cÃ´ng!');
       setNewPassword('');
     }
     setIsChangingPassword(false);
@@ -51,9 +57,9 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     }).eq('id', user.id);
 
     if (error) {
-      setMessage(`Lỗi: ${error.message}`);
+      setMessage(`Lá»—i: ${error.message}`);
     } else {
-      setMessage('Cập nhật thông tin thành công!');
+      setMessage('Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng!');
       router.refresh();
     }
     setIsSaving(false);
@@ -85,10 +91,10 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
       // Auto save the new avatar url to profile
       await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id);
       
-      setMessage('Tải ảnh đại diện thành công!');
+      setMessage('Táº£i áº£nh Ä‘áº¡i diá»‡n thÃ nh cÃ´ng!');
       router.refresh();
     } catch (error: any) {
-      setMessage(`Lỗi tải ảnh: ${error.message}`);
+      setMessage(`Lá»—i táº£i áº£nh: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -98,10 +104,10 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     <div className="animate-page-transition w-full h-full max-w-3xl mx-auto">
       <div className="mb-10">
         <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 mb-2">
-          Cài Đặt Tài Khoản
+          CÃ i Äáº·t TÃ i Khoáº£n
         </h1>
         <p className="text-gray-500 dark:text-gray-400 font-medium">
-          Quản lý thông tin cá nhân và ảnh đại diện của bạn.
+          Quáº£n lÃ½ thÃ´ng tin cÃ¡ nhÃ¢n vÃ  áº£nh Ä‘áº¡i diá»‡n cá»§a báº¡n.
         </p>
       </div>
 
@@ -135,8 +141,8 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
               />
             </div>
             <div className="text-center sm:text-left">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ảnh đại diện</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Định dạng JPG, PNG hoặc GIF. Tối đa 2MB.</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">áº¢nh Ä‘áº¡i diá»‡n</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Äá»‹nh dáº¡ng JPG, PNG hoáº·c GIF. Tá»‘i Ä‘a 2MB.</p>
             </div>
           </div>
 
@@ -145,7 +151,7 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
           {/* User Info Section */}
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Địa chỉ Email (Chỉ xem)</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Äá»‹a chá»‰ Email (Chá»‰ xem)</label>
               <input 
                 type="text" 
                 disabled 
@@ -155,19 +161,19 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Họ và Tên</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Há» vÃ  TÃªn</label>
               <input 
                 type="text" 
                 value={fullName} 
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Nhập tên của bạn..."
+                placeholder="Nháº­p tÃªn cá»§a báº¡n..."
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] rounded-xl outline-none focus:border-indigo-500 font-medium text-gray-900 dark:text-white transition-colors"
               />
             </div>
           </div>
 
           {message && (
-            <div className={`p-4 rounded-xl text-sm font-bold ${message.includes('Lỗi') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
+            <div className={`p-4 rounded-xl text-sm font-bold ${message.includes('Lá»—i') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
               {message}
             </div>
           )}
@@ -179,7 +185,7 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
               className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-md transition-all disabled:opacity-70"
             >
               {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              Lưu Thay Đổi
+              LÆ°u Thay Äá»•i
             </button>
           </div>
         
@@ -187,15 +193,15 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
           <hr className="border-gray-100 dark:border-[#27272a] my-8" />
           
           <div className="space-y-5">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Đổi mật khẩu</h3>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Äá»•i máº­t kháº©u</h3>
             <div className="flex flex-col sm:flex-row gap-4 items-end">
               <div className="flex-1 w-full">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Mật khẩu mới</label>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Máº­t kháº©u má»›i</label>
                 <input 
                   type="password" 
                   value={newPassword} 
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)..."
+                  placeholder="Nháº­p máº­t kháº©u má»›i (Ã­t nháº¥t 6 kÃ½ tá»±)..."
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] rounded-xl outline-none focus:border-indigo-500 font-medium text-gray-900 dark:text-white transition-colors"
                 />
               </div>
@@ -206,12 +212,12 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
                 className="w-full sm:w-auto bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white dark:text-black text-white px-6 py-3 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 h-[50px] flex items-center justify-center gap-2"
               >
                 {isChangingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-                Cập nhật
+                Cáº­p nháº­t
               </button>
             </div>
             
             {passwordMessage && (
-              <div className={`p-3 rounded-xl text-sm font-bold ${passwordMessage.includes('Lỗi') || passwordMessage.includes('ít nhất') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
+              <div className={`p-3 rounded-xl text-sm font-bold ${passwordMessage.includes('Lá»—i') || passwordMessage.includes('Ã­t nháº¥t') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
                 {passwordMessage}
               </div>
             )}
@@ -219,6 +225,21 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
 
         </form>
       </div>
+
+      <div className="ios-glass p-8 rounded-3xl mt-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+          <LogOut className="w-5 h-5 text-red-500" /> Đăng xuất
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Đăng xuất kh?i tài khoản trên thiết bị này.</p>
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-colors font-bold py-3 rounded-xl flex items-center justify-center gap-2"
+        >
+          <LogOut className="w-5 h-5" />
+          Đăng xuất
+        </button>
+      </div>
     </div>
   );
 }
+
