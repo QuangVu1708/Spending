@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { Loader2, User, Camera, Save, Lock, LogOut } from 'lucide-react';
@@ -18,8 +18,6 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
   const supabase = createClient();
   const router = useRouter();
 
-  
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = '/login';
@@ -28,7 +26,7 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 6) {
-      setPasswordMessage('Máº­t kháº©u pháº£i cÃ³ Ã­t nháº¥t 6 kÃ½ tá»±.');
+      setPasswordMessage('Mật khẩu phải có ít nhất 6 ký tự.');
       return;
     }
     
@@ -38,9 +36,9 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
-      setPasswordMessage(`Lá»—i: ${error.message}`);
+      setPasswordMessage(`Lỗi: ${error.message}`);
     } else {
-      setPasswordMessage('Äá»•i máº­t kháº©u thÃ nh cÃ´ng!');
+      setPasswordMessage('Đổi mật khẩu thành công!');
       setNewPassword('');
     }
     setIsChangingPassword(false);
@@ -51,178 +49,172 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     setIsSaving(true);
     setMessage('');
 
-    const { error } = await supabase.from('profiles').update({
+    const { error } = await supabase.from('profiles').upsert({
+      id: user.id,
       full_name: fullName,
-      avatar_url: avatarUrl
-    }).eq('id', user.id);
+      avatar_url: avatarUrl,
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
-      setMessage(`Lá»—i: ${error.message}`);
+      setMessage(`Lỗi: ${error.message}`);
     } else {
-      setMessage('Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng!');
+      setMessage('Lưu hồ sơ thành công!');
       router.refresh();
     }
     setIsSaving(false);
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      if (!e.target.files || e.target.files.length === 0) return;
-      const file = e.target.files[0];
-      
-      setIsUploading(true);
-      setMessage('');
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      // Create a unique file name
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+    setIsUploading(true);
+    setMessage('');
 
-      // Upload to 'avatars' bucket
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${user.id}-${Math.random()}.${fileExt}`;
 
-      if (uploadError) throw uploadError;
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file);
 
-      // Get public URL
-      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      
-      setAvatarUrl(data.publicUrl);
-      
-      // Auto save the new avatar url to profile
-      await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', user.id);
-      
-      setMessage('Táº£i áº£nh Ä‘áº¡i diá»‡n thÃ nh cÃ´ng!');
-      router.refresh();
-    } catch (error: any) {
-      setMessage(`Lá»—i táº£i áº£nh: ${error.message}`);
-    } finally {
+    if (uploadError) {
+      setMessage(`Lỗi tải ảnh: ${uploadError.message}`);
       setIsUploading(false);
+      return;
     }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    setAvatarUrl(publicUrl);
+    
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      avatar_url: publicUrl,
+    });
+
+    setIsUploading(false);
+    setMessage('Cập nhật ảnh đại diện thành công!');
+    router.refresh();
   };
 
   return (
-    <div className="animate-page-transition w-full h-full max-w-3xl mx-auto">
+    <div className="pb-20 max-w-2xl">
       <div className="mb-10">
-        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 mb-2">
-          CÃ i Äáº·t TÃ i Khoáº£n
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 font-medium">
-          Quáº£n lÃ½ thÃ´ng tin cÃ¡ nhÃ¢n vÃ  áº£nh Ä‘áº¡i diá»‡n cá»§a báº¡n.
-        </p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Cài đặt</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Quản lý hồ sơ và bảo mật tài khoản</p>
       </div>
 
-      <div className="ios-glass p-8 rounded-[32px] shadow-sm">
-        <form onSubmit={handleSave} className="space-y-8">
-          
-          {/* Avatar Section */}
-          <div className="flex flex-col items-center sm:flex-row gap-6">
-            <div className="relative group">
-              <div className="w-32 h-32 rounded-full bg-gray-100 dark:bg-[#111] border-4 border-white dark:border-[#222] shadow-xl overflow-hidden flex items-center justify-center">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="w-12 h-12 text-gray-400" />
-                )}
-              </div>
-              <button 
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 disabled:opacity-50"
-              >
-                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleAvatarUpload} 
-                accept="image/*" 
-                className="hidden" 
-              />
-            </div>
-            <div className="text-center sm:text-left">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">áº¢nh Ä‘áº¡i diá»‡n</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Äá»‹nh dáº¡ng JPG, PNG hoáº·c GIF. Tá»‘i Ä‘a 2MB.</p>
-            </div>
-          </div>
-
-          <hr className="border-gray-100 dark:border-[#27272a]" />
-
-          {/* User Info Section */}
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Äá»‹a chá»‰ Email (Chá»‰ xem)</label>
-              <input 
-                type="text" 
-                disabled 
-                value={user.email} 
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-[#111] text-gray-500 border border-gray-200 dark:border-[#333] rounded-xl outline-none font-medium cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Há» vÃ  TÃªn</label>
-              <input 
-                type="text" 
-                value={fullName} 
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Nháº­p tÃªn cá»§a báº¡n..."
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] rounded-xl outline-none focus:border-indigo-500 font-medium text-gray-900 dark:text-white transition-colors"
-              />
-            </div>
-          </div>
-
-          {message && (
-            <div className={`p-4 rounded-xl text-sm font-bold ${message.includes('Lá»—i') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
-              {message}
-            </div>
-          )}
-
-          <div className="flex justify-end pt-4">
-            <button 
-              type="submit"
-              disabled={isSaving}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold shadow-md transition-all disabled:opacity-70"
-            >
-              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              LÆ°u Thay Äá»•i
-            </button>
-          </div>
+      <div className="ios-glass p-8 rounded-3xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none -mr-32 -mt-32"></div>
         
-          {/* Password Change Section */}
-          <hr className="border-gray-100 dark:border-[#27272a] my-8" />
-          
-          <div className="space-y-5">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Äá»•i máº­t kháº©u</h3>
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1 w-full">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Máº­t kháº©u má»›i</label>
-                <input 
-                  type="password" 
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Nháº­p máº­t kháº©u má»›i (Ã­t nháº¥t 6 kÃ½ tá»±)..."
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#333] rounded-xl outline-none focus:border-indigo-500 font-medium text-gray-900 dark:text-white transition-colors"
+        <form onSubmit={handleSave} className="relative z-10">
+          <div className="flex flex-col sm:flex-row gap-8 mb-8">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-2xl bg-indigo-500/10 border-2 border-indigo-500/20 overflow-hidden flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-10 h-10 text-indigo-500/50" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-3 -right-3 w-10 h-10 bg-indigo-600 text-white rounded-xl shadow-lg flex items-center justify-center hover:bg-indigo-500 transition-colors hover:scale-105 active:scale-95"
+                  disabled={isUploading}
+                >
+                  {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+                </button>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+            
+            <div className="flex-1 space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Họ và tên</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-transparent focus:border-indigo-500/50 focus:bg-white dark:focus:bg-black/40 rounded-xl outline-none transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-400"
+                  placeholder="Nhập tên của bạn"
                 />
               </div>
-              <button 
-                type="button"
-                onClick={handlePasswordChange}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email (Không thể thay đổi)</label>
+                <input
+                  type="text"
+                  value={user.email}
+                  disabled
+                  className="w-full px-4 py-3 bg-gray-100/50 dark:bg-gray-800/50 border border-transparent rounded-xl outline-none font-medium text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={isSaving}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              Lưu thay đổi
+            </button>
+            {message && (
+              <span className={`text-sm font-bold ${message.includes('Lỗi') ? 'text-red-500' : 'text-green-500'}`}>
+                {message}
+              </span>
+            )}
+          </div>
+        </form>
+      </div>
+
+      <div className="ios-glass p-8 rounded-3xl mt-8">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-indigo-500" /> Đổi mật khẩu
+        </h2>
+        <form onSubmit={handlePasswordChange}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Mật khẩu mới</label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-3 bg-white/50 dark:bg-black/20 border border-transparent focus:border-indigo-500/50 focus:bg-white dark:focus:bg-black/40 rounded-xl outline-none transition-all font-medium text-gray-900 dark:text-white"
+                placeholder="Nhập ít nhất 6 ký tự"
+              />
+            </div>
+            
+            <div>
+              <button
+                type="submit"
                 disabled={isChangingPassword || !newPassword}
-                className="w-full sm:w-auto bg-gray-900 hover:bg-black dark:bg-gray-100 dark:hover:bg-white dark:text-black text-white px-6 py-3 rounded-xl font-bold shadow-sm transition-all disabled:opacity-50 h-[50px] flex items-center justify-center gap-2"
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isChangingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-                Cáº­p nháº­t
+                {isChangingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-4 h-4" />}
+                Cập nhật mật khẩu
               </button>
             </div>
             
             {passwordMessage && (
-              <div className={`p-3 rounded-xl text-sm font-bold ${passwordMessage.includes('Lá»—i') || passwordMessage.includes('Ã­t nháº¥t') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
+              <div className={`p-3 rounded-xl text-sm font-bold ${passwordMessage.includes('Lỗi') || passwordMessage.includes('ít nhất') ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'}`}>
                 {passwordMessage}
               </div>
             )}
           </div>
-
         </form>
       </div>
 
@@ -230,7 +222,7 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
           <LogOut className="w-5 h-5 text-red-500" /> Đăng xuất
         </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Đăng xuất kh?i tài khoản trên thiết bị này.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Đăng xuất khỏi tài khoản trên thiết bị này.</p>
         <button 
           onClick={handleLogout}
           className="w-full bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white transition-colors font-bold py-3 rounded-xl flex items-center justify-center gap-2"
@@ -242,4 +234,3 @@ export default function SettingsClient({ user, initialProfile }: { user: any, in
     </div>
   );
 }
-
