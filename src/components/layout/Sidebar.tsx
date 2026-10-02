@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Wallet, ArrowRightLeft, CreditCard, Settings, LogOut, Moon, Sun, Shield } from 'lucide-react';
+import { LayoutDashboard, Wallet, ArrowRightLeft, CreditCard, Settings, Wrench, LogOut, Moon, Sun, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
@@ -83,7 +83,16 @@ export default function Sidebar({ isAdmin = false, profile = null }: { isAdmin?:
             <span className="text-xs font-bold uppercase">{theme === 'dark' ? 'Tối' : 'Sáng'}</span>
           </button>
         )}
-        <Link href="/settings" className={cn(
+        <Link href="/utilities" className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 font-medium",
+              pathname === '/utilities' 
+                ? "bg-white/40 dark:bg-white/10 shadow-sm border border-white/50 dark:border-white/10 text-slate-900 dark:text-white" 
+                : "text-slate-500 hover:text-slate-900 hover:bg-white/20 dark:hover:bg-white/5 dark:hover:text-white border border-transparent"
+            )}>
+              <Wrench className="w-5 h-5" />
+              <span>Tiện ích</span>
+            </Link>
+            <Link href="/settings" className={cn(
             "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 font-medium",
             pathname === '/settings' 
               ? "bg-white/40 dark:bg-white/10 shadow-sm border border-white/50 dark:border-white/10 text-slate-900 dark:text-white" 

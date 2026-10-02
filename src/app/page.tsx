@@ -1,4 +1,5 @@
 import UnifiedSmartInput from '@/components/smart-input/UnifiedSmartInput';
+import DashboardMonthPicker from '@/components/DashboardMonthPicker';
 import { ArrowDownRight, ArrowUpRight, Wallet, AlertCircle, Building2, TrendingUp, PieChart } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
@@ -50,10 +51,7 @@ export default async function Dashboard() {
           </h1>
           <p className="text-slate-500 dark:text-slate-300 font-medium">Bức tranh tài chính của bạn hôm nay thế nào?</p>
         </div>
-        <div className="flex items-center gap-2 ios-glass px-4 py-2 rounded-2xl">
-          <TrendingUp className="w-4 h-4 text-indigo-500" />
-          <span className="font-semibold text-sm text-slate-700 dark:text-slate-200">Tháng {new Date().getMonth() + 1}, {new Date().getFullYear()}</span>
-        </div>
+        <DashboardMonthPicker />
       </header>
 
       {/* Smart & Manual Inputs */}

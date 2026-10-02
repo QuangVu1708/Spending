@@ -12,6 +12,14 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
+  themeColor: "#4f46e5",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FinanceAI",
+  },
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
   title: "FinanceAI - Quản lý tài chính cá nhân",
   description: "Theo dõi chi tiêu và tự động hóa với AI",
 };
@@ -48,6 +56,13 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           {/* Apple iOS Liquid Background */}
+          <Toaster 
+            position="top-center" 
+            toastOptions={{ 
+              duration: 4000, 
+              style: { background: '#27272a', color: '#fff', borderRadius: '16px', fontWeight: 'bold' } 
+            }} 
+          />
           <div className="liquid-bg-container">
             <div className="liquid-blob liquid-blob-1"></div>
             <div className="liquid-blob liquid-blob-2"></div>

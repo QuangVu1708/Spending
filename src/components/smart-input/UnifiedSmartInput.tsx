@@ -192,7 +192,7 @@ export default function UnifiedSmartInput({ wallets, categories, userId }: { wal
 
   return (
     <div className="w-full relative z-20">
-      {!showEditForm ? (
+      {true && (
         <>
           <form onSubmit={handleTextSubmit} className="relative group max-w-3xl mx-auto">
             <div className="ios-glass rounded-[2rem] flex items-center w-full rainbow-border pl-6 pr-2 py-2">
@@ -247,8 +247,10 @@ export default function UnifiedSmartInput({ wallets, categories, userId }: { wal
             </button>
           </div>
         </>
-      ) : (
-        <div className="ios-glass p-8 rounded-[32px] max-w-3xl mx-auto shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden">
+      )}
+      
+      {showEditForm && (
+        <div className="mt-8 ios-glass p-5 sm:p-8 rounded-[32px] max-w-3xl mx-auto shadow-2xl animate-in slide-in-from-top-4 duration-300 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
           
           <div className="flex items-center justify-between mb-8">

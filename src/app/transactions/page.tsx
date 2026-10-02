@@ -2,8 +2,9 @@ import { ArrowRightLeft } from 'lucide-react';
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import TransactionFilters from '@/components/TransactionFilters';
 
-export default async function TransactionsPage() {
+export default async function TransactionsPage({ searchParams }: { searchParams: { from?: string, to?: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -17,7 +18,9 @@ export default async function TransactionsPage() {
 
   return (
     <div className="pb-20">
-      <div className="mb-10">
+      <TransactionFilters />
+
+      <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Lịch sử giao dịch</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Chi tiết dòng tiền của bạn</p>
       </div>
